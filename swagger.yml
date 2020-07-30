@@ -1,0 +1,175 @@
+openapi: 3.0.0
+servers:
+  - description: Dev Stage
+    url: https://dev-api.keee.io/
+  - description: Prod Stage
+    url: https://api.keee.io/
+info:
+  description: Rest API for keee
+  version: "1.0.0"
+  title: Keee API
+  license:
+    name: Private
+tags:
+  - name: config
+    description: AWS Cognito and domain settings
+  - name: things
+    description: Operations related to devices, cameras and sensors
+paths:
+  /config/cognito:
+    get:
+      summary: Get Cognito config for the request origin
+      operationId: get-cognito-config
+      tags:
+        - config
+      parameters:
+        - name: origin
+          in: header
+          schema:
+            type: string
+            example: test.keee.dev
+      responses:
+        200:
+          description: Config successfully retrieved
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/CognitoConfig"
+  /things:
+    get:
+      summary: Get a list of all things
+      operationId: list-things
+      tags:
+        - things
+      parameters:
+        - name: bbox
+          description: filter results to within the bounding box (xmin, ymin, xmax, ymax)
+          in: query
+          schema:
+            $ref: "#/components/schemas/Bbox"
+        - name: limit
+          in: query
+          description: number of rows to return
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: starting row to select from
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: filter by name and/or description
+          schema:
+            type: string
+      responses:
+        200:
+          description: Things successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Things"
+    post:
+      summary: Get a list of all things
+      operationId: create-thing
+      tags:
+        - things
+      responses:
+        200:
+          description: Things successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Things"
+  /thing/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/Uuid"
+    get:
+      summary: Get the details of a specific thing
+      operationId: get-thing
+      tags:
+        - things
+      responses:
+        200:
+          description: Thing successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+        404:
+          description: Thing not found matching this query
+    delete:
+      summary: Delete a thing
+      operationId: delete-thing
+      tags:
+        - things
+      responses:
+        200:
+          description: Thing successfully deleted
+
+components:
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+      example: "111dd282-ccb2-41f4-b7d7-195e9a111111"
+    Color:
+      type: string
+      format: hex
+      example: "#BCE784"
+    Url:
+      type: string
+      format: uri
+      example: "https://www.keee.dev/.../"
+    Bbox:
+      type: string
+      example: "-95.774704,35.995683,-89.098843,40.61364"
+    CognitoConfig:
+      type: object
+      properties:
+        hostname:
+          type: string
+          example: test.keee.dev
+        user-pool-id:
+          type: string
+        region:
+          type: string
+          example: us-east-2
+        app-client-id:
+          type: string
+        identity-pool-id:
+          type: string
+    Thing:
+      type: object
+      properties:
+        thing_id:
+          $ref: "#/components/schemas/Uuid"
+        name:
+          type: string
+        description:
+          type: string
+        image_url:
+          $ref: "#/components/schemas/Url"
+        color:
+          $ref: "#/components/schemas/Color"
+        thing_type_name:
+          type: string
+        place_name:
+          type: string
+        lng:
+          type: number
+        lat:
+          type: number
+        attributes:
+          type: object
+        last_event_timestamp:
+          type: number
+          nullable: true
+    Things:
+      type: array
+      items:
+        $ref: "#/components/schemas/Thing"
